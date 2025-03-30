@@ -49,7 +49,8 @@ systemC_example/
 ├── build/                  # 构建输出目录（自动创建）
 │   ├── mux_4to1/           # 选择器实验的构建结果
 │   ├── alu_4bit/           # ALU实验的构建结果
-│   └── register_ram/       # 寄存器堆和RAM实验的构建结果
+│   ├── register_ram/       # 寄存器堆和RAM实验的构建结果
+│   └── fifo_design/        # FIFO实验的构建结果
 ├── mux_4to1/               # 2位4选1选择器
 │   ├── mux_4to1.h
 │   ├── mux_4to1_tb.cpp
@@ -65,6 +66,11 @@ systemC_example/
 │   ├── ram.h
 │   ├── register_ram_tb.cpp
 │   ├── mem1.txt
+│   ├── Makefile
+│   └── README.md
+├── fifo_design/            # FIFO设计与验证
+│   ├── fifo.h
+│   ├── fifo_tb.cpp
 │   ├── Makefile
 │   └── README.md
 ├── Makefile                # 主Makefile
@@ -84,6 +90,10 @@ systemC_example/
 ### 实验三：寄存器堆与RAM
 实现16×8位的寄存器堆与RAM，支持读写操作和从文件初始化。
 详情见[register_ram/README.md](register_ram/README.md)
+
+### 实验四：FIFO设计与验证
+实现一个参数化的FIFO缓冲器，使用SC_THREAD进程展示复杂时序行为控制。
+详情见[fifo_design/README.md](fifo_design/README.md)
 
 
 

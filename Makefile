@@ -1,5 +1,5 @@
 # SystemC项目总Makefile
-SUBDIRS = mux_4to1 alu_4bit register_ram
+SUBDIRS = mux_4to1 alu_4bit register_ram fifo_design
 BUILD_DIR = build
 
 .PHONY: all clean $(SUBDIRS) prepare run $(patsubst %,run-%,$(SUBDIRS))
