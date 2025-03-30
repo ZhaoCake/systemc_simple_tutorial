@@ -2,7 +2,7 @@
 
 > 本人出于需要初次接触SystemC，深感SystemC的中文资料十分缺乏。斗胆作此教程，如有谬误，敬请指正。
 
-> 本教程主要作用范围是SystemC的使用，包括进行模块设计和testbench编写，关于方法学上的一切，笔者完全不懂。采用的设计实验是[南京大学数字逻辑与计算机组成设计实验](https://nju-projectn.github.io/dlco-lecture-note)中的选作几例。
+> 本教程主要作用范围是SystemC的使用，包括进行模块设计和testbench编写，关于方法学上的一切，笔者完全不懂。采用的设计实验主要是[南京大学数字逻辑与计算机组成设计实验](https://nju-projectn.github.io/dlco-lecture-note)中的选作几例。
 
 ## 环境配置
 
