@@ -1,4 +1,4 @@
-# 2位4选1选择器 Makefile
+# 4位带符号补码ALU Makefile
 
 # 编译器和标志
 CXX = g++
@@ -6,13 +6,13 @@ CXXFLAGS = -std=c++17 -Wall -I/usr/include
 LDFLAGS = -L/usr/lib -lsystemc -pthread -Wl,-rpath,/usr/lib
 
 # 构建目录（由上级Makefile传入）
-BUILD_DIR ?= $(CURDIR)/../build/mux_4to1
+BUILD_DIR ?= $(CURDIR)/../build/alu_4bit
 
 # 目标可执行文件
-TARGET = $(BUILD_DIR)/mux_4to1_tb
+TARGET = $(BUILD_DIR)/alu_4bit_tb
 
 # 源文件和目标文件
-SRCS = mux_4to1_tb.cpp
+SRCS = alu_4bit_tb.cpp
 OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
 # 默认目标

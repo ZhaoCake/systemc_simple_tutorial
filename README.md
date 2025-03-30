@@ -9,7 +9,7 @@
 本项目使用标准的Makefile构建系统，适用于Linux/Unix环境。所有编译结果统一输出到build目录。
 
 ### 前置条件
-- C++编译器(gcc/g++)，支持C++17标准
+- C++编译器(gcc/g++)
 - 系统已安装的SystemC库 (头文件位于/usr/include，库文件位于/usr/lib)
 - GNU Make
 
@@ -27,8 +27,12 @@ make run
 # 运行特定模块的测试（如2位4选1选择器）
 make run-mux_4to1
 
+# 运行ALU测试
+make run-alu_4bit
+
 # 或者直接运行编译好的可执行文件
 ./build/mux_4to1/mux_4to1_tb
+./build/alu_4bit/alu_4bit_tb
 
 # 清理生成的文件
 make clean
@@ -39,24 +43,31 @@ make clean
 ```
 systemC_example/
 ├── build/                  # 构建输出目录（自动创建）
-│   └── mux_4to1/           # 各子项目的构建结果
+│   ├── mux_4to1/           # 选择器实验的构建结果
+│   └── alu_4bit/           # ALU实验的构建结果
 ├── mux_4to1/               # 2位4选1选择器
-│   ├── mux_4to1.h          # 模块定义
-│   ├── mux_4to1_tb.cpp     # 测试平台
-│   └── Makefile            # 子项目Makefile
+│   ├── mux_4to1.h
+│   ├── mux_4to1_tb.cpp
+│   ├── Makefile
+│   └── README.md
+├── alu_4bit/               # 4位带符号补码ALU
+│   ├── alu_4bit.h
+│   ├── alu_4bit_tb.cpp
+│   ├── Makefile
+│   └── README.md
 ├── Makefile                # 主Makefile
 └── README.md               # 项目文档
 ```
 
-## 实验一：2位4选1选择器
+## 实验列表
 
-### 实验要求
-实现一个2位4选1的选择器，选择器有5个2位输入端，分别为X0, X1, X2, X3和Y，输出端为F；
-X0, X1, X2, X3是四个2位的输入变量。输出F端受控制端Y的控制，选择其中的一个X输出：
-- 当Y = 00时，输出端输出X0，即F = X0
-- 当Y = 01时，输出端输出X1，即F = X1
-- 当Y = 10时，输出端输出X2，即F = X2
-- 当Y = 11时，输出端输出X3，即F = X3
+### 实验一：2位4选1选择器
+实现一个2位4选1的选择器，根据选择信号Y的值选择对应的输入信号X输出。
+详情见[mux_4to1/README.md](mux_4to1/README.md)
+
+### 实验二：4位带符号补码ALU
+实现一个4位带符号位的补码算术逻辑单元，支持加减法、逻辑运算和比较操作。
+详情见[alu_4bit/README.md](alu_4bit/README.md)
 
 
 
