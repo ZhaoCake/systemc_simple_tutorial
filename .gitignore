@@ -1,0 +1,24 @@
+# 构建目录
+build/
+
+# 编译生成的文件
+*.o
+*.out
+*.a
+*.so
+*.obj
+*.exe
+
+# 可执行文件
+mux_4to1_tb
+
+# 波形文件
+*.vcd
+*.wlf
+*.vpd
+
+# 编辑器临时文件
+.vscode/
+.idea/
+*.swp
+*~
