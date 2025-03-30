@@ -84,12 +84,18 @@ sc_out<sc_uint<8>> data_out;
 
 ## 3. 进程和敏感列表
 
-SystemC支持三种进程类型：
+SystemC提供三种不同的进程类型，每种都有其特定的用途和优势。选择正确的进程类型对于准确建模硬件行为至关重要。
 
 ### 3.1 SC_METHOD
 
-不消耗仿真时间的进程，每当敏感事件发生时执行：
+**特点**：
+- 不消耗仿真时间
+- 每次触发时完整执行，不能暂停
+- 执行完后立即返回
+- 每次敏感事件发生时重新执行
+- 不保存内部执行状态
 
+**语法**：
 ```cpp
 SC_MODULE(Example) {
     sc_in<bool> clock;
@@ -100,53 +106,259 @@ SC_MODULE(Example) {
     }
     
     void process() {
-        // 逻辑代码
+        // 执行逻辑代码，不能包含wait()语句
     }
 };
 ```
 
+**适用场景**：
+- **组合逻辑电路**：如多路复用器、解码器、ALU
+- **简单的时序逻辑**：如D触发器、寄存器（需要检查时钟边沿）
+- **信号监控**：任何需要响应信号变化的逻辑
+- **高性能仿真**：因为SC_METHOD开销最小
+
+**例子**：在实验中的应用
+1. **ALU实现**：纯组合逻辑，根据操作码产生结果
+   ```cpp
+   SC_METHOD(alu_process);
+   sensitive << A << B << op;  // 任何输入变化都会触发计算
+   ```
+
+2. **寄存器写入**：时序逻辑，在时钟边沿写入数据
+   ```cpp
+   SC_METHOD(write_process);
+   sensitive << clk.pos();  // 仅在时钟上升沿触发
+   
+   void write_process() {
+       if (clk.posedge() && wr_en.read()) { // 需要额外检查是否是上升沿
+           // 写入数据
+       }
+   }
+   ```
+
 ### 3.2 SC_THREAD
 
-只启动一次，可以使用wait()语句暂停执行：
+**特点**：
+- 可以消耗仿真时间(通过wait()语句)
+- 执行过程中可以暂停和恢复
+- 仿真开始时只启动一次
+- 保留内部执行状态和程序计数器
+- wait()之后的代码会在下一次唤醒时继续执行
 
+**语法**：
 ```cpp
 SC_MODULE(Example) {
     sc_in<bool> clock;
     
     SC_CTOR(Example) {
         SC_THREAD(process);
-        sensitive << clock.pos();
+        sensitive << clock.pos();  // 初始敏感列表
     }
     
     void process() {
+        // 初始化代码（只执行一次）
         while(true) {
             // 处理逻辑
+            wait();  // 暂停执行，等待敏感事件
+            // wait()后的代码在下次敏感事件时继续执行
+        }
+        
+        // 或者使用多种wait形式
+        wait(10, SC_NS);          // 等待特定时间
+        wait(event);              // 等待特定事件
+        wait(clock.posedge_event()); // 等待时钟上升沿
+        wait(condition_expr);     // 等待条件满足
+    }
+};
+```
+
+**适用场景**：
+- **测试平台(Testbench)**：生成测试向量、验证结果
+- **复杂的时序协议**：如总线协议、握手机制
+- **状态机**：具有多个状态和复杂转换
+- **行为级建模**：描述高层次算法流程
+- **异步系统**：具有不规则时序行为的系统
+
+**例子**：在实验中的应用
+1. **测试平台的激励生成**：按顺序生成输入并等待响应
+   ```cpp
+   SC_THREAD(test_process);
+   // 不需要初始敏感列表，通过wait()控制
+   
+   void test_process() {
+       // 初始化
+       for(int i=0; i<10; i++) {
+           input.write(i);   // 设置输入
+           wait(10, SC_NS);  // 等待10ns
+           check_output();   // 检查输出
+       }
+       sc_stop();  // 测试结束
+   }
+   ```
+
+2. **复杂状态机**：如UART发送器
+   ```cpp
+   SC_THREAD(uart_tx);
+   sensitive << clock.pos();
+   
+   void uart_tx() {
+       while(true) {
+           // 等待发送请求
+           while(!tx_start.read())
+               wait();  // 等待下一个时钟
+           
+           // 发送起始位
+           tx.write(0);
+           wait(bit_time);
+           
+           // 发送8位数据
+           for(int i=0; i<8; i++) {
+               tx.write(data.read() & (1<<i));
+               wait(bit_time);
+           }
+           
+           // 发送停止位
+           tx.write(1);
+           wait(bit_time);
+       }
+   }
+   ```
+
+### 3.3 SC_CTHREAD
+
+**特点**：
+- SC_THREAD的特殊变种，专为时钟驱动设计
+- 仅对指定时钟的特定边沿敏感
+- 每个wait()语句自动对应一个时钟周期
+- 无需指定敏感列表，直接与时钟边沿绑定
+- 最接近硬件描述语言(HDL)的同步设计风格
+
+**语法**：
+```cpp
+SC_MODULE(Example) {
+    sc_in<bool> clock;
+    sc_in<bool> reset;
+    
+    SC_CTOR(Example) {
+        SC_CTHREAD(process, clock.pos());  // 直接指定时钟边沿
+        reset_signal_is(reset, true);      // 指定复位信号和极性
+    }
+    
+    void process() {
+        // 复位逻辑
+        variable = 0;
+        
+        while(true) {
+            // 处理单个时钟周期的逻辑
+            output.write(variable);
+            variable = input.read();
+            
             wait();  // 等待下一个时钟周期
         }
     }
 };
 ```
 
-### 3.3 SC_CTHREAD
+**适用场景**：
+- **时序电路的RTL级建模**：最接近实际硬件设计
+- **流水线设计**：每个wait()代表一个流水线阶段
+- **有限状态机(FSM)**：时钟同步的状态转换
+- **同步顺序电路**：寄存器、计数器、移位寄存器
+- **综合目标代码**：最易转换为可综合的RTL代码
 
-专门为时钟设计的线程，仅在指定时钟边沿执行：
+**例子**：在实验中的应用
+1. **计数器**：时钟驱动的简单计数器
+   ```cpp
+   SC_CTHREAD(counter_proc, clock.pos());
+   reset_signal_is(reset, true);
+   
+   void counter_proc() {
+       // 复位逻辑
+       count = 0;
+       
+       while(true) {
+           // 输出当前值
+           count_out.write(count);
+           
+           // 更新计数器
+           if(enable.read())
+               count++;
+           
+           wait();  // 等待下一个时钟周期
+       }
+   }
+   ```
 
-```cpp
-SC_MODULE(Example) {
-    sc_in<bool> clock;
-    
-    SC_CTOR(Example) {
-        SC_CTHREAD(process, clock.pos());
-    }
-    
-    void process() {
-        while(true) {
-            // 处理逻辑
-            wait();  // 等待下一个时钟上升沿
-        }
-    }
-};
-```
+2. **简单CPU执行阶段**：每个周期执行一条指令
+   ```cpp
+   SC_CTHREAD(execute, clock.pos());
+   reset_signal_is(reset, true);
+   
+   void execute() {
+       // 复位状态
+       pc = 0;
+       
+       while(true) {
+           // 取指令
+           instruction = memory[pc];
+           
+           // 解码和执行
+           switch(instruction & 0xF0) {
+               case 0x10: // ADD
+                   reg[instruction & 0x0F]++;
+                   break;
+               case 0x20: // SUB
+                   reg[instruction & 0x0F]--;
+                   break;
+               // 更多指令...
+           }
+           
+           // 更新程序计数器
+           pc++;
+           
+           wait();  // 执行下一条指令
+       }
+   }
+   ```
+
+### 3.4 三种进程类型的对比
+
+| 特性 | SC_METHOD | SC_THREAD | SC_CTHREAD |
+|------|-----------|-----------|------------|
+| **可暂停执行** | 否 | 是 | 是 |
+| **支持wait()** | 否 | 是 | 是(简化) |
+| **执行频率** | 每次敏感事件 | 只启动一次 | 只启动一次 |
+| **敏感列表** | 显式指定 | 可动态修改 | 隐式(时钟边沿) |
+| **时钟关联** | 手动处理 | 手动处理 | 自动绑定 |
+| **状态保存** | 无 | 完整保存 | 完整保存 |
+| **资源消耗** | 最低 | 较高 | 较高 |
+| **代码复杂性** | 可能高(分散状态) | 中等 | 最低 |
+| **典型应用** | 组合逻辑 | 测试平台/协议 | RTL设计 |
+| **对应HDL** | always_comb | initial块/fork-join | always_ff |
+
+### 3.5 选择合适的进程类型
+
+在进行SystemC设计时，关于使用哪种进程类型，可以遵循以下准则：
+
+1. **使用SC_METHOD当：**
+   - 建模纯组合逻辑
+   - 需要对多个信号变化立即响应
+   - 进程内部不需要保存状态
+   - 追求最高的仿真性能
+
+2. **使用SC_THREAD当：**
+   - 创建测试平台或激励生成器
+   - 实现具有复杂时序的协议
+   - 需要灵活控制等待时间或事件
+   - 行为需要使用wait()暂停和继续
+
+3. **使用SC_CTHREAD当：**
+   - 实现时钟驱动的同步设计
+   - 创建可能需要综合的RTL代码
+   - 建模流水线或多阶段逻辑
+   - 设计与时钟紧密绑定的状态机
+
+选择适当的进程类型不仅影响代码清晰度，还直接影响仿真性能和模型的准确性.
 
 ## 4. 数据类型
 
@@ -440,7 +652,7 @@ module FSM (
         if (rst) begin
             state <= S0;
             output_signal <= 1'b0;
-        end else begin
+        } else begin
             case (state)
                 S0: begin
                     state <= input_signal ? S1 : S0;
